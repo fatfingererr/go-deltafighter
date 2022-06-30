@@ -13,4 +13,4 @@ set API_KEY=xxxxxxxxxxx;set SECRET_KEY=xxxxxxxxxxx; go run .
 
 Then open the excel file, and you will see the delta of the few bars recently:
 
-![vp](https://github.com/go-vp/go-vp/blob/main/cover.png?raw=true)
+![vp](https://github.com/fatfingererr/go-deltafighter/blob/master/cover.png?raw=true)
