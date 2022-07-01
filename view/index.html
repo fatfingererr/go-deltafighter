@@ -1,0 +1,54 @@
+<html>
+  <head>
+    <title> Delta - {{.Symbol}} {{.Timeframe}} </title>
+      <style>
+
+          th:nth-child(1),
+          td:nth-child(1) {
+              position: sticky;
+              left: 0;
+              width: 100px;
+              min-width: 100px;
+              background:white;
+              z-index:1000;
+          }
+
+      </style>
+  </head>
+
+  <body>
+    <table border="1">
+      <thead>
+      <tr>
+          <th></th>
+      {{range .Times}}
+          <th ><div style="width:100px;" >{{ . | tdate }} </div></th>
+      {{end}}
+      </tr>
+      <tr>
+          <th></th>
+       {{range .Times}}
+          <th>{{ . | ttime }}</th>
+       {{end}}
+      </tr>
+      </thead>
+       <tbody>
+       {{range $p := .Prices}}
+       <tr>
+           <td>{{ $p }} </td>
+           {{range $t := $.Times}}
+               <td style="padding:2px;text-align:center;background:linear-gradient(to bottom, black,{{ lookupColor $t $p $.Datas }});color:white;opacity: 0.8; ">{{ lookup $t $p $.Datas }} </td>
+           {{end}}
+       </tr>
+       {{end}}
+
+       </tbody>
+    </table>
+   <script>
+       setTimeout(function(){
+           // self.location.reload();
+       },10000);
+   </script>
+  </body>
+
+</html>
