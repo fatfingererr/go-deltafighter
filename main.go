@@ -2,14 +2,16 @@ package main
 
 import (
 	"fmt"
-	"github.com/takuoki/clmconv"
-	"github.com/xuri/excelize/v2"
 	"math"
 	"net/http"
 	"time"
 
+	"github.com/takuoki/clmconv"
+	"github.com/xuri/excelize/v2"
+
 	"html/template"
 	"log"
+
 	// "strings"
 	"path"
 )
@@ -32,7 +34,7 @@ func getCell(row int, col int) (location string) {
 	return fmt.Sprintf("%s%d", clmconv.Itoa(row-1), col)
 }
 
-func generateExcel(){
+func generateExcel() {
 
 	const unitTimeframe = "1m"
 	const timeframe = "15m"
@@ -170,13 +172,12 @@ func generateExcel(){
 	}
 }
 
-
-func CalcDeltaData(unitTimeframe string,timeframe string,symbol string) *DetalViewModel{
+func CalcDeltaData(unitTimeframe string, timeframe string, symbol string) *DetalViewModel {
 
 	var viewModel DetalViewModel
 	var datas = map[string]DeltaData{}
-	viewModel.Timeframe=timeframe
-	viewModel.UnitTimeframe=timeframe
+	viewModel.Timeframe = timeframe
+	viewModel.UnitTimeframe = timeframe
 	viewModel.Symbol = symbol
 
 	tickSize := GetSymbolTickSize(symbol)
@@ -191,7 +192,6 @@ func CalcDeltaData(unitTimeframe string,timeframe string,symbol string) *DetalVi
 		pLow = append(pLow, float64(i)*pRange)
 		pHigh = append(pHigh, float64(i+1)*pRange)
 	}
-
 
 	buyer := make([][]float64, 0)
 	seller := make([][]float64, 0)
@@ -229,7 +229,7 @@ func CalcDeltaData(unitTimeframe string,timeframe string,symbol string) *DetalVi
 						bSize := unitData.takers[di] / float64(uRange)
 						aSize := (unitData.volumes[di] - unitData.takers[di]) / float64(uRange)
 						fmt.Printf("unitData.volumes[di]: %f, unitData.takers[di]: %f, unitData.makers[di]: %f\n", unitData.volumes[di], unitData.takers[di], unitData.makers[di])
-						for ii := i; ii < i+uRange+1; ii++ {
+						for ii := i; ii < i+uRange; ii++ {
 							fmt.Printf("buyer: %f, seller: %f\n", buyer[ii][j], seller[ii][j])
 							fmt.Printf("bSize: %f, aSize: %f\n", bSize, aSize)
 							buyer[ii][j] = buyer[ii][j] + bSize
@@ -237,7 +237,7 @@ func CalcDeltaData(unitTimeframe string,timeframe string,symbol string) *DetalVi
 
 							deltaData := DeltaData{
 								Price:      pLow[ii],
-								Time:        data.opentimes[j],
+								Time:       data.opentimes[j],
 								MarketSell: seller[ii][j],
 								MarketBuy:  buyer[ii][j],
 							}
@@ -246,24 +246,20 @@ func CalcDeltaData(unitTimeframe string,timeframe string,symbol string) *DetalVi
 								timeframes = append(timeframes, data.opentimes[j])
 							}
 
-
 							buyerRatio := deltaData.MarketBuy/deltaData.MarketSell - 1
 
-							var vblue = 0
-							var vred = 0
+							var color string
 							if buyerRatio >= 0 {
-								vblue = 0
-								vred = int(math.Max(0, math.Min(255, 200*math.Pow(deltaData.MarketBuy/deltaData.MarketSell - 1, 2))))
+								vred := int(math.Max(0, math.Min(255, 200*math.Pow(deltaData.MarketBuy/deltaData.MarketSell-1, 2))))
+								color = fmt.Sprintf("#%02X%02X%02X", vred, 0, 0)
 							} else {
-								vred = 0
-								vblue = int(math.Max(0, math.Min(255, 200*math.Pow(deltaData.MarketSell/deltaData.MarketBuy - 1, 2))))
+								vblue := int(math.Max(0, math.Min(255, 50+150*math.Pow(deltaData.MarketSell/deltaData.MarketBuy-1, 2))))
+								color = fmt.Sprintf("#%02X%02X%02X", 50, 50, vblue)
 							}
-
-							color := fmt.Sprintf("#%02X%02X%02X", vred, 0, vblue)
 
 							deltaData.Color = color
 
-							datas[fmt.Sprintf("%d%d%d%d-%f",deltaData.Time.Month(),deltaData.Time.Day(),deltaData.Time.Hour(),deltaData.Time.Minute(),deltaData.Price)] = deltaData
+							datas[fmt.Sprintf("%d%d%d%d-%f", deltaData.Time.Month(), deltaData.Time.Day(), deltaData.Time.Hour(), deltaData.Time.Minute(), deltaData.Price)] = deltaData
 							//datas = append(datas , deltaData)
 							fmt.Printf("buyer(%d,%d): %f, seller(%d,%d): %f\n", ii, j, buyer[ii][j], ii, j, seller[ii][j])
 						}
@@ -278,9 +274,9 @@ func CalcDeltaData(unitTimeframe string,timeframe string,symbol string) *DetalVi
 
 	}
 
-	var reversePrices  []float64
-	for i := range pLow{
-		reversePrices = append(reversePrices, pLow[len(pLow)-i -1])
+	var reversePrices []float64
+	for i := range pLow {
+		reversePrices = append(reversePrices, pLow[len(pLow)-i-1])
 	}
 
 	viewModel.Times = timeframes
@@ -298,7 +294,6 @@ func CalcDeltaData(unitTimeframe string,timeframe string,symbol string) *DetalVi
 	return &viewModel
 }
 
-
 type DeltaData struct {
 	Time       time.Time
 	Price      float64
@@ -309,25 +304,25 @@ type DeltaData struct {
 }
 
 type DetalViewModel struct {
-	Datas map[string]DeltaData
-	Times []time.Time
-	Prices []float64
+	Datas         map[string]DeltaData
+	Times         []time.Time
+	Prices        []float64
 	UnitTimeframe string
-	Timeframe string
-	Symbol string
+	Timeframe     string
+	Symbol        string
 }
 
 func renderWeb(w http.ResponseWriter, r *http.Request) {
-    r.ParseForm()  //解析參數，預設是不會解析的
-    // fmt.Println(r.Form)  //這些資訊是輸出到伺服器端的列印資訊
-    // fmt.Println("path", r.URL.Path)
-    // fmt.Println("scheme", r.URL.Scheme)
-    // fmt.Println(r.Form["url_long"])
-    // for k, v := range r.Form {
-    //     fmt.Println("key:", k)
-    //     fmt.Println("val:", strings.Join(v, ""))
-    // }
-    // fmt.Fprintf(w, "Hello astaxie!") //這個寫入到 w 的是輸出到客戶端的
+	r.ParseForm() //解析參數，預設是不會解析的
+	// fmt.Println(r.Form)  //這些資訊是輸出到伺服器端的列印資訊
+	// fmt.Println("path", r.URL.Path)
+	// fmt.Println("scheme", r.URL.Scheme)
+	// fmt.Println(r.Form["url_long"])
+	// for k, v := range r.Form {
+	//     fmt.Println("key:", k)
+	//     fmt.Println("val:", strings.Join(v, ""))
+	// }
+	// fmt.Fprintf(w, "Hello astaxie!") //這個寫入到 w 的是輸出到客戶端的
 
 	var unitTimeframe = "1m"
 	var timeframe = "15m"
@@ -339,32 +334,32 @@ func renderWeb(w http.ResponseWriter, r *http.Request) {
 		symbol = r.Form["symbol"][0]
 	}
 
-	if len(timeframe) == 0{
+	if len(timeframe) == 0 {
 		timeframe = "15m"
 	}
 
-	if len(symbol) == 0{
+	if len(symbol) == 0 {
 		symbol = "ETHUSDT"
 	}
 
-	var model = CalcDeltaData(unitTimeframe,timeframe,symbol)
+	var model = CalcDeltaData(unitTimeframe, timeframe, symbol)
 
 	fm := template.FuncMap{
 		"ttime": func(t time.Time) string {
 			return fmt.Sprintf("%02d:%02d", t.Hour(), t.Minute())
 		},
 		"tdate": func(t time.Time) string {
-			return 		fmt.Sprintf("%02d/%02d", t.Month(), t.Day())
+			return fmt.Sprintf("%02d/%02d", t.Month(), t.Day())
 		},
-		"lookup": func(t time.Time,price float64, data map[string]DeltaData) string{
-			val,exist := data[fmt.Sprintf("%d%d%d%d-%f",t.Month(),t.Day(),t.Hour(),t.Minute(),price)]
+		"lookup": func(t time.Time, price float64, data map[string]DeltaData) string {
+			val, exist := data[fmt.Sprintf("%d%d%d%d-%f", t.Month(), t.Day(), t.Hour(), t.Minute(), price)]
 			if !exist {
 				return ""
 			}
-			return fmt.Sprintf("%.0f x %.0f",val.MarketBuy,val.MarketSell)
+			return fmt.Sprintf("%.0f x %.0f", val.MarketBuy, val.MarketSell)
 		},
-		"lookupColor": func(t time.Time,price float64, data map[string]DeltaData) string{
-			val,exist := data[fmt.Sprintf("%d%d%d%d-%f",t.Month(),t.Day(),t.Hour(),t.Minute(),price)]
+		"lookupColor": func(t time.Time, price float64, data map[string]DeltaData) string {
+			val, exist := data[fmt.Sprintf("%d%d%d%d-%f", t.Month(), t.Day(), t.Hour(), t.Minute(), price)]
 			if !exist {
 				return ""
 			}
@@ -372,27 +367,26 @@ func renderWeb(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-    fp := path.Join("view", "index.html")
+	fp := path.Join("view", "index.html")
 
+	tmpl, err := template.New("index.html").Funcs(fm).ParseFiles(fp)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-    tmpl, err := template.New("index.html").Funcs(fm).ParseFiles(fp)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-
-    if err := tmpl.Execute(w, model); err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-    }
+	if err := tmpl.Execute(w, model); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 
 }
 
 func main() {
-    http.HandleFunc("/", renderWeb) //設定存取的路由
-    err := http.ListenAndServe(":9090", nil) //設定監聽的埠
-    if err != nil {
-        log.Fatal("ListenAndServe: ", err)
-    }
+	http.HandleFunc("/", renderWeb)          //設定存取的路由
+	err := http.ListenAndServe(":9090", nil) //設定監聽的埠
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
 
 	// fmt.Printf("price range : %f", pRange)
 	// fmt.Printf("minPrice : %f", minPrice)
