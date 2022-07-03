@@ -192,7 +192,6 @@ func CalcDeltaData(unitTimeframe string,timeframe string,symbol string) *DetalVi
 		pHigh = append(pHigh, float64(i+1)*pRange)
 	}
 
-	viewModel.Times = data.opentimes
 
 	buyer := make([][]float64, 0)
 	seller := make([][]float64, 0)
@@ -209,11 +208,13 @@ func CalcDeltaData(unitTimeframe string,timeframe string,symbol string) *DetalVi
 	}
 
 	nowtime := 0
+	var timeframes []time.Time
 	for di := range unitData.opens {
 		uHigh := int(math.Floor(unitData.highs[di] / pRange))
 		uLow := int(math.Floor(unitData.lows[di] / pRange))
 		uRange := uHigh - uLow + 1
 		fmt.Printf("DI!! nowtick: %s \n", unitData.opentimes[di].String())
+
 		for ri := iLow; ri < iHigh; ri++ {
 			if uLow >= ri && uLow < ri+1 {
 				i := ri - iLow
@@ -240,6 +241,11 @@ func CalcDeltaData(unitTimeframe string,timeframe string,symbol string) *DetalVi
 								MarketSell: seller[ii][j],
 								MarketBuy:  buyer[ii][j],
 							}
+
+							if len(timeframes) == 0 || timeframes[len(timeframes)-1] != data.opentimes[j] {
+								timeframes = append(timeframes, data.opentimes[j])
+							}
+
 
 							buyerRatio := deltaData.MarketBuy/deltaData.MarketSell - 1
 
@@ -269,12 +275,15 @@ func CalcDeltaData(unitTimeframe string,timeframe string,symbol string) *DetalVi
 				break
 			}
 		}
+
 	}
 
 	var reversePrices  []float64
 	for i := range pLow{
 		reversePrices = append(reversePrices, pLow[len(pLow)-i -1])
 	}
+
+	viewModel.Times = timeframes
 
 	viewModel.Prices = reversePrices
 
