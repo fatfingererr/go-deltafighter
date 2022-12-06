@@ -14,6 +14,7 @@ import (
 
 	// "strings"
 	"path"
+	"strconv"
 )
 
 func getMinMax(data KLineData) (minPrice float64, maxPrice float64) {
@@ -34,14 +35,14 @@ func getCell(row int, col int) (location string) {
 	return fmt.Sprintf("%s%d", clmconv.Itoa(row-1), col)
 }
 
-func generateExcel() {
+func generateExcel(ticknum float64) {
 
 	const unitTimeframe = "1m"
 	const timeframe = "15m"
 	const symbol = "ETHUSDT"
 
 	tickSize := GetSymbolTickSize(symbol)
-	pRange := 500 * tickSize
+	pRange := ticknum * tickSize
 	unitData := GetKLineData(symbol, unitTimeframe)
 	data := GetKLineData(symbol, timeframe)
 	minPrice, maxPrice := getMinMax(unitData)
@@ -80,18 +81,18 @@ func generateExcel() {
 					tstart := data.opentimes[j].Unix()
 					tend := data.closetimes[j].Unix()
 					tnow := unitData.opentimes[di].Unix()
-					fmt.Printf("bar open: %s, bar closed: %s, nowtick: %s \n", data.opentimes[j].String(), data.closetimes[j].String(), unitData.opentimes[di].String())
+					// fmt.Printf("bar open: %s, bar closed: %s, nowtick: %s \n", data.opentimes[j].String(), data.closetimes[j].String(), unitData.opentimes[di].String())
 					if tnow >= tstart && tnow <= tend {
-						fmt.Printf("!")
+						// fmt.Printf("!")
 						bSize := unitData.takers[di] / float64(uRange)
 						aSize := (unitData.volumes[di] - unitData.takers[di]) / float64(uRange)
-						fmt.Printf("unitData.volumes[di]: %f, unitData.takers[di]: %f, unitData.makers[di]: %f\n", unitData.volumes[di], unitData.takers[di], unitData.makers[di])
+						// // fmt.Printf("unitData.volumes[di]: %f, unitData.takers[di]: %f, unitData.makers[di]: %f\n", unitData.volumes[di], unitData.takers[di], unitData.makers[di])
 						for ii := i; ii < i+uRange+1; ii++ {
-							fmt.Printf("buyer: %f, seller: %f\n", buyer[ii][j], seller[ii][j])
-							fmt.Printf("bSize: %f, aSize: %f\n", bSize, aSize)
+							// fmt.Printf("buyer: %f, seller: %f\n", buyer[ii][j], seller[ii][j])
+							// fmt.Printf("bSize: %f, aSize: %f\n", bSize, aSize)
 							buyer[ii][j] = buyer[ii][j] + bSize
 							seller[ii][j] = seller[ii][j] + aSize
-							fmt.Printf("buyer(%d,%d): %f, seller(%d,%d): %f\n", ii, j, buyer[ii][j], ii, j, seller[ii][j])
+							// fmt.Printf("buyer(%d,%d): %f, seller(%d,%d): %f\n", ii, j, buyer[ii][j], ii, j, seller[ii][j])
 						}
 						break
 					} else {
@@ -172,7 +173,7 @@ func generateExcel() {
 	}
 }
 
-func CalcDeltaData(unitTimeframe string, timeframe string, symbol string) *DetalViewModel {
+func CalcDeltaData(unitTimeframe string, timeframe string, symbol string, ticknum float64) *DetalViewModel {
 
 	var viewModel DetalViewModel
 	var datas = map[string]DeltaData{}
@@ -181,7 +182,7 @@ func CalcDeltaData(unitTimeframe string, timeframe string, symbol string) *Detal
 	viewModel.Symbol = symbol
 
 	tickSize := GetSymbolTickSize(symbol)
-	pRange := 500 * tickSize
+	pRange := ticknum * tickSize
 	unitData := GetKLineData(symbol, unitTimeframe)
 	data := GetKLineData(symbol, timeframe)
 	minPrice, maxPrice := getMinMax(unitData)
@@ -213,7 +214,7 @@ func CalcDeltaData(unitTimeframe string, timeframe string, symbol string) *Detal
 		uHigh := int(math.Floor(unitData.highs[di] / pRange))
 		uLow := int(math.Floor(unitData.lows[di] / pRange))
 		uRange := uHigh - uLow + 1
-		fmt.Printf("DI!! nowtick: %s \n", unitData.opentimes[di].String())
+		// fmt.Printf("DI!! nowtick: %s \n", unitData.opentimes[di].String())
 
 		for ri := iLow; ri < iHigh; ri++ {
 			if uLow >= ri && uLow < ri+1 {
@@ -223,15 +224,15 @@ func CalcDeltaData(unitTimeframe string, timeframe string, symbol string) *Detal
 					tstart := data.opentimes[j].Unix()
 					tend := data.closetimes[j].Unix()
 					tnow := unitData.opentimes[di].Unix()
-					fmt.Printf("bar open: %s, bar closed: %s, nowtick: %s \n", data.opentimes[j].String(), data.closetimes[j].String(), unitData.opentimes[di].String())
+					// .Printf("bar open: %s, bar closed: %s, nowtick: %s \n", data.opentimes[j].String(), data.closetimes[j].String(), unitData.opentimes[di].String())
 					if tnow >= tstart && tnow <= tend {
-						fmt.Printf("!")
+						// fmt.Printf("!")
 						bSize := unitData.takers[di] / float64(uRange)
 						aSize := (unitData.volumes[di] - unitData.takers[di]) / float64(uRange)
-						fmt.Printf("unitData.volumes[di]: %f, unitData.takers[di]: %f, unitData.makers[di]: %f\n", unitData.volumes[di], unitData.takers[di], unitData.makers[di])
+						// fmt.Printf("unitData.volumes[di]: %f, unitData.takers[di]: %f, unitData.makers[di]: %f\n", unitData.volumes[di], unitData.takers[di], unitData.makers[di])
 						for ii := i; ii < i+uRange; ii++ {
-							fmt.Printf("buyer: %f, seller: %f\n", buyer[ii][j], seller[ii][j])
-							fmt.Printf("bSize: %f, aSize: %f\n", bSize, aSize)
+							// fmt.Printf("buyer: %f, seller: %f\n", buyer[ii][j], seller[ii][j])
+							// fmt.Printf("bSize: %f, aSize: %f\n", bSize, aSize)
 							buyer[ii][j] = buyer[ii][j] + bSize
 							seller[ii][j] = seller[ii][j] + aSize
 
@@ -261,7 +262,7 @@ func CalcDeltaData(unitTimeframe string, timeframe string, symbol string) *Detal
 
 							datas[fmt.Sprintf("%d%d%d%d-%f", deltaData.Time.Month(), deltaData.Time.Day(), deltaData.Time.Hour(), deltaData.Time.Minute(), deltaData.Price)] = deltaData
 							//datas = append(datas , deltaData)
-							fmt.Printf("buyer(%d,%d): %f, seller(%d,%d): %f\n", ii, j, buyer[ii][j], ii, j, seller[ii][j])
+							// fmt.Printf("buyer(%d,%d): %f, seller(%d,%d): %f\n", ii, j, buyer[ii][j], ii, j, seller[ii][j])
 						}
 						break
 					} else {
@@ -333,6 +334,10 @@ func renderWeb(w http.ResponseWriter, r *http.Request) {
 	if len(r.Form["symbol"]) > 0 {
 		symbol = r.Form["symbol"][0]
 	}
+	var ticknum = 100.0
+	if len(r.Form["tick"]) > 0 {
+		ticknum, _ = strconv.ParseFloat(r.Form["tick"][0], 0)
+	}
 
 	if len(timeframe) == 0 {
 		timeframe = "15m"
@@ -342,7 +347,7 @@ func renderWeb(w http.ResponseWriter, r *http.Request) {
 		symbol = "ETHUSDT"
 	}
 
-	var model = CalcDeltaData(unitTimeframe, timeframe, symbol)
+	var model = CalcDeltaData(unitTimeframe, timeframe, symbol, ticknum)
 
 	fm := template.FuncMap{
 		"ttime": func(t time.Time) string {
@@ -382,6 +387,7 @@ func renderWeb(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	fmt.Printf("Server has started on http://localhost:9090?symbol=ETHUSDT&timeframe=5m&tick=100\n")
 	http.HandleFunc("/", renderWeb)          //設定存取的路由
 	err := http.ListenAndServe(":9090", nil) //設定監聽的埠
 	if err != nil {
