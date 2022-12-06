@@ -2,13 +2,16 @@
 
 ## Getting Started
 
-Get the `API_KEY` and `SECRET_KEY` from Binance API 
+### Install Go
+
+Please visit https://go.dev/doc/install
+
+### Run the program
 
 ```bash
-API_KEY=xxxxxxxxxxx SECRET_KEY=xxxxxxxxxxx go run .
-
-# Windows (powershell)
-set API_KEY=xxxxxxxxxxx;set SECRET_KEY=xxxxxxxxxxx; go run .
+https://github.com/fatfingererr/go-deltafighter.git
+cd go-deltafighter
+go run .
 ```
 
 Then open [http://localhost:9090/?symbol=ETHUSDT&timeframe=15m](http://localhost:9090/?symbol=ETHUSDT&timeframe=15m)
